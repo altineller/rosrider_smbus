@@ -29,7 +29,7 @@ with SMBus(1) as bus:
 
    try:
       # 0x04 is sys_ctl address
-      res = bus.write_i2c_block_data(0x3C, 0x04, [0,0,0,command])
+      bus.write_i2c_block_data(0x3C, 0x04, [0,0,0,command])
    except IOError as e:
       print('IOError: %s' % e)
 

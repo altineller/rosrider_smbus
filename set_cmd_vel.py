@@ -15,6 +15,10 @@ with SMBus(1) as bus:
     send_array = linear_x_array + angular_z_array
 
     while 1:
-      res = bus.write_i2c_block_data(0x3C, 0x03, send_array)
-      print(res)
-      time.sleep(0.05)
+
+        try:
+            bus.write_i2c_block_data(0x3C, 0x03, send_array)
+        except IOError as e:
+            print('IOError: %s' % e)
+
+        time.sleep(0.05)
