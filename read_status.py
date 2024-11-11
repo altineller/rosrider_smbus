@@ -120,14 +120,11 @@ with SMBus(1) as bus:
     if system_status & 0x80:
         _system_status += 'EEPROM_INIT_ERROR | '
 
-    if system_status & 0x04:
-        _system_status += 'EEPROM_WRITE_DEFAULTS_ERROR |'
-
-    if system_status & 0x02:
-        _system_status += 'EEPROM_WRITE_I2C_FLOAT_ERROR | '
+    if system_status & 0x40:
+        _system_status += 'REBOOT_REQUIRED |'
 
     if system_status & 0x01:
-        _system_status += 'EEPROM_WRITE_I2C_INT_ERROR | '
+        _system_status += 'EEPROM_WRITE_I2C_ERROR | '
 
     _system_status_len = len(_system_status)
     if _system_status_len:
