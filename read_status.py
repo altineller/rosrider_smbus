@@ -5,6 +5,12 @@ import crc8
 
 STATUS_BUFFER_SIZE = 32
 
+def unsignedToSigned(n, byte_count):
+  return int.from_bytes(n.to_bytes(byte_count, 'little', signed=False), 'little', signed=True)
+
+def signedToUnsigned(n, byte_count):
+  return int.from_bytes(n.to_bytes(byte_count, 'little', signed=True), 'little', signed=False)
+
 with SMBus(1) as bus:
 
     try:
@@ -36,34 +42,39 @@ with SMBus(1) as bus:
     print('cs: {}, {}'.format(cs_left, cs_right))
 
     # control effort
-    pwm_left = status[16] << 8 | status[17]
-    pwm_right = status[18] << 8 | status[19]
+    pwm_left = unsignedToSigned(status[16] << 8 | status[17], 2)
+    pwm_right = unsignedToSigned(status[18] << 8 | status[19], 2)
     print('pwm: {}, {}'.format(pwm_left, pwm_right))
 
-    # motor direction (not encoder direction)
-    dir_left = status[20] & 0x01 > 0
-    dir_right = status[20] & 0x02 > 0
-    print('pwm dir: {}, {}'.format(dir_left, dir_right))
-
+    # TODO: this is static for 10hz, 48ppr, 65:1 
     ROUNDS_PER_MINUTE = (60.0 / (1.0 / 10)) / (48 * 65)
+
+    # TODO: RPM values can be multiplied by encoder directions
+
     # current rpm raw values, multiply by ROUNDS_PER_MINUTE
-    rpm_left = status[21] << 8 | status[22]
-    rpm_right = status[23] << 8 | status[24]
+    rpm_left = status[20] << 8 | status[21]
+    rpm_right = status[22] << 8 | status[23]
     print('rpm: {}, {}'.format(rpm_left * ROUNDS_PER_MINUTE, rpm_right * ROUNDS_PER_MINUTE))
 
     # encoder dir values
-    enc_dir_left = (status[25] & 0x0F) - 1
-    enc_dir_right = ((status[25] & 0xF0) >> 4) - 1
+    enc_dir_left = (status[24] & 0x0F) - 1
+    enc_dir_right = ((status[24] & 0xF0) >> 4) - 1
     print('enc dir: {}, {}'.format(enc_dir_left, enc_dir_right))
 
     # print the statuses
-    print('STATUS: [{}, {}, {}]'.format(status[26], status[27], status[28]))
+    print('STATUS: [{}, {}, {}]'.format(status[25], status[26], status[27]))
 
     # human readable power status
-    power_status = status[26]
+    power_status = status[25]
     _power_status = ''
     if power_status & 0x80:
         _power_status += 'CMD_TIMEOUT | '
+
+    if power_status & 0x40:
+        _power_status += 'POWER_ALERT | '
+    else:
+       _power_status += 'POWER_GOOD | '
+
     if power_status & 0x20:
         _power_status += 'RIGHT AMP LIMIT | '
     if power_status & 0x10:
@@ -82,7 +93,7 @@ with SMBus(1) as bus:
         print('POWER_STATUS:', _power_status[0:_power_status_len - 3])
 
     # human readable motor status
-    motor_status = status[27]
+    motor_status = status[26]
     _motor_status = 'MOTOR_STATUS: '
 
     if motor_status & 0x80:
@@ -114,14 +125,16 @@ with SMBus(1) as bus:
     print(_motor_status)
 
     # human readable system status
-    system_status = status[28]
+    system_status = status[27]
     _system_status = ''
+
+    # TODO: added more status
 
     if system_status & 0x80:
         _system_status += 'EEPROM_INIT_ERROR | '
 
     if system_status & 0x40:
-        _system_status += 'REBOOT_REQUIRED |'
+        _system_status += 'REBOOT_REQUIRED | '
 
     if system_status & 0x01:
         _system_status += 'EEPROM_WRITE_I2C_ERROR | '
@@ -129,16 +142,18 @@ with SMBus(1) as bus:
     _system_status_len = len(_system_status)
     if _system_status_len:
         print('SYSTEM_STATUS:', _system_status[0:_system_status_len - 3])
+    else:
+        print('SYSTEM_STATUS: OK')
 
-    deltaT = status[30]
-    print('packet age: %s ms' % deltaT)
+    print('packet seq: %s' % status[28])
 
-    print('packet sequence: %s' % status[29])
+    packet_age = (status[29] << 8) | status[30]
+    print('packet age: %s 1/32768' % packet_age)
 
     packet_checksum = status[31]
 
     hash = crc8.crc8()
-    hash.update(bytearray(status[0:30]))
+    hash.update(bytearray(status[0:29]))
     calculated_checksum = int(hash.hexdigest(), 16)
 
     if calculated_checksum != packet_checksum:

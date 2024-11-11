@@ -14,8 +14,8 @@ with SMBus(1) as bus:
     pwm_left = int(sys.argv[1])
     pwm_right = int(sys.argv[2])
 
-    array_left = list(bytearray(struct.pack(">h", abs(pwm_left))))
-    array_right = list(bytearray(struct.pack(">h", abs(pwm_right))))
+    array_left = list(bytearray(struct.pack("i", abs(pwm_left))))
+    array_right = list(bytearray(struct.pack("i", abs(pwm_right))))
 
     if(pwm_left < 0):
         array_left[0] |= 0x80
@@ -29,6 +29,7 @@ with SMBus(1) as bus:
         # 0x01 is MOTOR_COMMAND
         try:
             bus.write_i2c_block_data(0x3C, 0x01, send_array)
+            print('pwm set');
+            time.sleep(0.01)
         except IOError as e:
             print('IOError: %s' % e)
-        time.sleep(0.025)

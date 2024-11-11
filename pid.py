@@ -20,6 +20,8 @@ with SMBus(1) as bus:
 
     send_array = target_left_array + target_right_array
 
+    print(send_array)
+
     while 1:
         try:
             bus.write_i2c_block_data(0x3C, 0x02, send_array)
