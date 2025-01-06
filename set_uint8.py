@@ -21,6 +21,8 @@ with SMBus(1) as bus:
         print('PARAM_PWM_DIV 2')
         print('PARAM_DRIVE_MODE 3')
         print('PARAM_MONITOR_RATE 4')
+        print('PARAM_ALLOWED_SKIP 5')
+        print('PARAM_I2C_ADDRESS 6')
         exit(0)
 
     paramAddr = 0x0A # EEPROM_WRITE_UINT8

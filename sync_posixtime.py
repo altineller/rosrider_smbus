@@ -22,8 +22,6 @@ with SMBus(1) as bus:
 
 '''
 
-
-
 with SMBus(1) as bus:
 
     setRTC = 0x06 # SET_RTC
