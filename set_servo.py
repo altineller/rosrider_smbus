@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+DEVICE_ADDR = 0x3c
+
+
 from smbus2 import SMBus
 import struct
 import time
@@ -29,7 +32,7 @@ with SMBus(1) as bus:
 
     # 0x07 is SET_SERVO
     try:
-        bus.write_i2c_block_data(0x3C, 0x07, send_array)
+        bus.write_i2c_block_data(DEVICE_ADDR, 0x07, send_array)
         print('servo commands sent');
     except IOError as e:
         print('IOError: %s' % e)

@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+
+DEVICE_ADDR = 0x3c
+
 from smbus2 import SMBus
 import struct
 import time
@@ -28,7 +31,7 @@ with SMBus(1) as bus:
     while 1:
         # 0x01 is MOTOR_COMMAND
         try:
-            bus.write_i2c_block_data(0x3C, 0x01, send_array)
+            bus.write_i2c_block_data(DEVICE_ADDR, 0x01, send_array)
             print('pwm set');
             time.sleep(0.01)
         except IOError as e:

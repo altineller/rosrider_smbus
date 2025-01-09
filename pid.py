@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+
+DEVICE_ADDR = 0x3c
+
 from smbus2 import SMBus
 import struct
 import time
@@ -24,7 +27,7 @@ with SMBus(1) as bus:
 
     while 1:
         try:
-            bus.write_i2c_block_data(0x3C, 0x02, send_array)
+            bus.write_i2c_block_data(DEVICE_ADDR, 0x02, send_array)
             time.sleep(0.05)  # notice 20hz
         except IOError as e:
             print('IOError: %s' % e)

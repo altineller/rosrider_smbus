@@ -4,6 +4,9 @@ import sys
 import string
 from smbus2 import SMBus
 
+
+DEVICE_ADDR = 0x3c
+
 def is_hex(s):
     try:
         int(s, 16)
@@ -52,7 +55,7 @@ with SMBus(1) as bus:
 
    try:
       # 0x04 is sys_ctl address
-      bus.write_i2c_block_data(0x3C, 0x04, [0,0,0,command])
+      bus.write_i2c_block_data(DEVICE_ADDR, 0x04, [0,0,0,command])
    except IOError as e:
       print('IOError: %s' % e)
 

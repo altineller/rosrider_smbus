@@ -6,6 +6,10 @@ import sys
 import crc8
 import time
 
+
+DEVICE_ADDR = 0x3c
+
+
 '''
 with SMBus(1) as bus:
 
@@ -16,7 +20,7 @@ with SMBus(1) as bus:
         if sub < 0.0000005: break
 
     send_array = list(bytearray(struct.pack("i", posix_time)))
-    bus.write_i2c_block_data(0x3C, 0x06, send_array)
+    bus.write_i2c_block_data(DEVICE_ADDR, 0x06, send_array)
 
     print(t)
 
@@ -50,7 +54,7 @@ with SMBus(1) as bus:
     '''
     try:
 
-        bus.write_i2c_block_data(0x3C, setRTC, send_array)
+        bus.write_i2c_block_data(DEVICE_ADDR, setRTC, send_array)
         print(t)
     except IOError as e:
         print('IOError: %s' % e)

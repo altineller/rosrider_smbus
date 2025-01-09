@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+
+DEVICE_ADDR = 0x3c
+
 from smbus2 import SMBus
 import crc8
 
@@ -7,7 +10,7 @@ with SMBus(1) as bus:
 
     try:
         # read result
-        result = bus.read_i2c_block_data(0x3C, 0xB0, 4)
+        result = bus.read_i2c_block_data(DEVICE_ADDR, 0xB0, 4)
         print('type: %d' % result[0])
         print('subtype: %d' % result[1])
         print('checksum: %d' % result[2])

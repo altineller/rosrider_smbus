@@ -5,6 +5,9 @@ import struct
 import sys
 import crc8
 
+DEVICE_ADDR = 0x3c
+
+
 def is_hex(s):
     try:
         int(s, 16)
@@ -60,8 +63,8 @@ with SMBus(1) as bus:
     '''
     try:
 
-        bus.write_i2c_block_data(0x3C, paramAddr, send_array)
-        result = bus.read_i2c_block_data(0x3C, 0xB0, 4) # 0xB0 is READ_RESULT address
+        bus.write_i2c_block_data(DEVICE_ADDR, paramAddr, send_array)
+        result = bus.read_i2c_block_data(DEVICE_ADDR, 0xB0, 4) # 0xB0 is READ_RESULT address
 
         # check if correct result
         if result[0]==0x0 and result[1]==paramAddr:

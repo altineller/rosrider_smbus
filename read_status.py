@@ -4,6 +4,7 @@ from smbus2 import SMBus
 import crc8
 
 STATUS_BUFFER_SIZE = 32
+DEVICE_ADDR = 0x3c
 
 def unsignedToSigned(n, byte_count):
   return int.from_bytes(n.to_bytes(byte_count, 'little', signed=False), 'little', signed=True)
@@ -15,7 +16,7 @@ with SMBus(1) as bus:
 
     try:
         # read status
-        status = bus.read_i2c_block_data(0x3C, 0xA0, STATUS_BUFFER_SIZE)
+        status = bus.read_i2c_block_data(DEVICE_ADDR, 0xA0, STATUS_BUFFER_SIZE)
         #print(status)
     except IOError as e:
         print('IOError: %s' % e)
