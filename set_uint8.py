@@ -13,6 +13,7 @@ PARAM_OVERRIDE = 0x02
 I2C_WRITE_RESULT_SUCCESS = 0x00
 I2C_WRITE_RESULT_UNCHANGED = 0x01
 I2C_WRITE_RESULT_CHECKSUM = 0x03
+I2C_WRITE_RESULT_OVERRIDE_FP_ERROR = 0xFE
 I2C_WRITE_RESULT_OVERRIDE = 0xFF
 
 RESULT_TYPE_WRITE_PARAM = 0x00
@@ -86,6 +87,8 @@ def main():
                         print('OVERRIDE')
                     elif result[3] == I2C_WRITE_RESULT_CHECKSUM:
                         print('SENT CHECKSUM ERROR')
+                    elif result[3] == I2C_WRITE_RESULT_OVERRIDE_FP_ERROR:
+                        print('FP ERROR')
                     else:
                         print(f'WRITE FAIL: {result[3]}')
                 else:
