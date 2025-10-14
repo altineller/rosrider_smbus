@@ -1,75 +1,98 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
 from smbus2 import SMBus
-import string
 import struct
 import sys
 import crc8
 
+DEVICE_ADDR = 0x3C
 
-DEVICE_ADDR = 0x3c
+PARAM_WRITE = 0x01
+PARAM_OVERRIDE = 0x02
 
-def is_hex(s):
+I2C_WRITE_RESULT_SUCCESS = 0x00
+I2C_WRITE_RESULT_UNCHANGED = 0x01
+I2C_WRITE_RESULT_CHECKSUM = 0x03
+I2C_WRITE_RESULT_OVERRIDE = 0xFF
+
+RESULT_TYPE_WRITE_PARAM = 0x00
+RESULT_TYPE_OVERRIDE_PARAM = 0x01
+
+PARAMS_DESC = [
+    "PARAM_PWM_SCALE 0",
+    "PARAM_PWM_FRQ 1",
+    "PARAM_MAX_IDLE_SECONDS 2",
+    "PARAM_UPPER_LIMIT 3",
+    "PARAM_INTEGRAL_LIMIT 4",
+    "PARAM_ENCODER_PPR 5"
+]
+
+def print_usage():
+    print('Incorrect arguments: index uint16Value [override [fp]]')
+    for desc in PARAMS_DESC:
+        print(desc)
+
+def main():
+    if len(sys.argv) < 3:
+        print_usage()
+        sys.exit(1)
+
     try:
-        int(s, 16)
-        return True
+        index = int(sys.argv[1], 0)
+        uint16Value = int(sys.argv[2], 0)
     except ValueError:
-        return False
+        print("Error: index and uint16Value must be integers.")
+        sys.exit(2)
 
-with SMBus(1) as bus:
+    override = len(sys.argv) > 3 and sys.argv[3].lower() in ['override', '1', 'true']
+    paramAddr = 0x0B  # EEPROM_WRITE_UINT16
 
-    if len(sys.argv) != 3:
-        print('incorrect arguments: index uint16Value')
-        print('PARAM_PWM_SCALE 0')
-        print('PARAM_PWM_FRQ 1')
-        print('PARAM_MAX_IDLE_SECONDS 2')
-        print('PARAM_UPPER_LIMIT 3')
-        print('PARAM_INTEGRAL_LIMIT 4')
-        print('PARAM_ENCODER_PPR 5')
-        exit(0)
+    if override:
+        type_op = PARAM_OVERRIDE
+        try:
+            fp = int(sys.argv[4], 0) if len(sys.argv) > 4 else 0x00
+        except ValueError:
+            print("Error: fp must be an integer.")
+            sys.exit(3)
+    else:
+        type_op = PARAM_WRITE
+        fp = 0x00
 
-    paramAddr = 0x0B # EEPROM_WRITE_UINT16
-    index = int(sys.argv[1])
-    uint16Value = int(sys.argv[2])
+    # Data packet: [index, type, fp, uint16Value (4 bytes LE), checksum]
+    packet = bytearray([index, type_op, fp])
+    packet.extend(struct.pack("<i", uint16Value))  # Little-endian 4 bytes (int)
 
-    uint16_array = bytearray([index])
-    num_array = bytearray(struct.pack("i", uint16Value))
+    hash_obj = crc8.crc8()
+    hash_obj.update(packet)
+    checksum = int(hash_obj.hexdigest(), 16)
+    packet.append(checksum)
 
-    send_array = bytearray(list(uint16_array) + list(num_array))
-
-    hashVal = crc8.crc8()
-    hashVal.update(send_array)
-    write_checksum = int(hashVal.hexdigest(), 16)
-
-    # last byte is checksum
-    send_array.insert(len(send_array), write_checksum)
-
-    #for b in send_array:
-    #    print(b)
-
-    '''
-        packet structure
-        byte[] = { index, 1, 2, 3, 4, checksum }
-    '''
     try:
+        with SMBus(1) as bus:
+            bus.write_i2c_block_data(DEVICE_ADDR, paramAddr, list(packet))
+            result = bus.read_i2c_block_data(DEVICE_ADDR, 0xB0, 4)
 
-        bus.write_i2c_block_data(DEVICE_ADDR, paramAddr, send_array)
-        result = bus.read_i2c_block_data(DEVICE_ADDR, 0xB0, 4) # 0xB0 is READ_RESULT address
-
-        # check if correct result
-        if result[0]==0x0 and result[1]==paramAddr:
-            # check that calculated and returned checksum is equal
-            if write_checksum==result[2]:
-                # check operation returned 0
-                if result[3]==0x0:
-                    print('SUCCESS')
-                elif result[3]==0x1:
-                    print('UNCHANGED')
+            # Validate result
+            if (result[0] in [RESULT_TYPE_WRITE_PARAM, RESULT_TYPE_OVERRIDE_PARAM]) and result[1] == paramAddr:
+                if checksum == result[2]:
+                    if result[3] == I2C_WRITE_RESULT_SUCCESS:
+                        print('SUCCESS')
+                    elif result[3] == I2C_WRITE_RESULT_UNCHANGED:
+                        print('UNCHANGED')
+                    elif result[3] == I2C_WRITE_RESULT_OVERRIDE:
+                        print('OVERRIDE')
+                    elif result[3] == I2C_WRITE_RESULT_CHECKSUM:
+                        print('SENT CHECKSUM ERROR')
+                    else:
+                        print(f'WRITE FAIL: {result[3]}')
                 else:
-                    print('WRITE FAIL: %d' % result[3])
+                    print(f'CHECKSUM FAIL: sent {checksum}, got {result[2]}')
             else:
-                print('CHECKSUM FAIL' % result)
-        else:
-            print('ASSERT FAIL: %s' % result)
-
+                print(f'ASSERT FAIL: {result}')
     except IOError as e:
-        print('IOError: %s' % e)
+        print(f'IOError: {e}')
+    except Exception as ex:
+        print(f'Unexpected error: {ex}')
+
+if __name__ == "__main__":
+    main()

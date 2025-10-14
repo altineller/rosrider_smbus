@@ -54,18 +54,18 @@ def main():
     paramAddr = 0x0C  # EEPROM_WRITE_UINT32
 
     if override:
-        type_of = PARAM_OVERRIDE
+        type_op = PARAM_OVERRIDE
         try:
             fp = int(sys.argv[4], 0) if len(sys.argv) > 4 else 0x00
         except ValueError:
             print("Error: fp must be an integer.")
             sys.exit(5)
     else:
-        type_of = PARAM_WRITE
+        type_op = PARAM_WRITE
         fp = 0x00
 
     # Data packet: [index, type, fp, uint32Value (4 bytes LE), checksum]
-    packet = bytearray([index, type_of, fp])
+    packet = bytearray([index, type_op, fp])
     packet.extend(struct.pack("<I", uint32Value))  # Little-endian 4 bytes, unsigned
 
     hash_obj = crc8.crc8()

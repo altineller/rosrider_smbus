@@ -61,18 +61,18 @@ def main():
     paramAddr = 0x0F  # EEPROM_WRITE_FLOAT
 
     if override:
-        type_of = PARAM_OVERRIDE
+        type_op = PARAM_OVERRIDE
         try:
             fp = int(sys.argv[4], 0) if len(sys.argv) > 4 else 0x00
         except ValueError:
             print("Error: fp must be an integer.")
             sys.exit(3)
     else:
-        type_of = PARAM_WRITE
+        type_op = PARAM_WRITE
         fp = 0x00
 
     # Data packet: [index, type, fp, floatValue (4 bytes LE float), checksum]
-    packet = bytearray([index, type_of, fp])
+    packet = bytearray([index, type_op, fp])
     packet.extend(struct.pack("<f", floatValue))  # Little-endian float
 
     hash_obj = crc8.crc8()
