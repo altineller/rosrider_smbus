@@ -40,6 +40,8 @@ with SMBus(1) as bus:
        print('SYSCTL_CODE_AUX_OFF 0x51')
        print('SYSCTL_CODE_FACTORY_DEFAULTS 0x99')
        print('SYSCTL_CODE_PRINT_RTC 0xAA')
+       print('SYSCTL_CODE_ADC_START 0xE0')
+       print('SYSCTL_CODE_ADC_STOP 0xE1')
 
        exit(0)
 

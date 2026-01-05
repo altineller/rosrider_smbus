@@ -35,11 +35,13 @@ with SMBus(1) as bus:
     bus_voltage_volts = bus_voltage_raw / 1000.0 # convert to volts
     print('bus voltage: {} V'.format(bus_voltage_volts))
 
-    # measured current left, right
-    cs_left_raw = status[12] << 8 | status[13]
-    cs_right_raw = status[14] << 8 | status[15]
-    cs_left = cs_left_raw * (6.6 / 4095)        # 500mV/A
-    cs_right = cs_right_raw * (6.6 / 4095)      # 500mV/A
+    # measured signed current left, right
+    cs_left_raw = int.from_bytes(status[12:14], byteorder='big', signed=True)
+    cs_right_raw = int.from_bytes(status[14:16], byteorder='big', signed=True)
+    print('cs raw: {}, {}'.format(cs_left_raw, cs_right_raw))
+
+    cs_left = cs_left_raw * (6.6 / 32767.0)        # CURRENT_CONVERSION_UNSCALER
+    cs_right = cs_right_raw * (6.6 / 32767.0)      #
     print('cs: {}, {}'.format(cs_left, cs_right))
 
     # control effort
@@ -47,10 +49,8 @@ with SMBus(1) as bus:
     pwm_right = unsignedToSigned(status[18] << 8 | status[19], 2)
     print('pwm: {}, {}'.format(pwm_left, pwm_right))
 
-    # TODO: this is static for 10hz, 48ppr, 65:1 
-    ROUNDS_PER_MINUTE = (60.0 / (1.0 / 10)) / (48 * 65)
-
-    # TODO: RPM values can be multiplied by encoder directions
+    # TODO: this is static for 20hz, 48ppr, 65:1
+    ROUNDS_PER_MINUTE = (60.0 / (1.0 / 20)) / (48 * 65)
 
     # current rpm raw values, multiply by ROUNDS_PER_MINUTE
     rpm_left = status[20] << 8 | status[21]
@@ -139,6 +139,9 @@ with SMBus(1) as bus:
 
     if system_status & 0x01:
         _system_status += 'EEPROM_WRITE_I2C_ERROR | '
+
+    if system_status & 0x02:
+        _system_status += 'INITIAL_UPDATE_ERROR | '
 
     _system_status_len = len(_system_status)
     if _system_status_len:

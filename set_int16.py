@@ -23,7 +23,9 @@ PARAMS_DESC = [
     "PARAM_LEFT_FORWARD_DEADZONE 0",
     "PARAM_LEFT_REVERSE_DEADZONE 1",
     "PARAM_RIGHT_FORWARD_DEADZONE 2",
-    "PARAM_RIGHT_REVERSE_DEADZONE 3"
+    "PARAM_RIGHT_REVERSE_DEADZONE 3",
+    "PARAM_CS_LEFT_OFFSET 4",
+    "PARAM_CS_RIGHT_OFFSET 5"
 ]
 
 def print_usage():
@@ -45,6 +47,9 @@ def main():
 
     override = len(sys.argv) > 3 and sys.argv[3].lower() in ['override', '1', 'true']
     paramAddr = 0x0D  # EEPROM_WRITE_INT16
+
+    # TODO: when overriding, need to send window for execution.
+    # TODO: depreciate override on python sets, or add fp index functionality
 
     if override:
         type_ = PARAM_OVERRIDE

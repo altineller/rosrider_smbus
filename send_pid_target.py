@@ -28,7 +28,7 @@ with SMBus(1) as bus:
     while 1:
         try:
             bus.write_i2c_block_data(DEVICE_ADDR, 0x02, send_array)
-            time.sleep(0.05)  # notice 20hz
+            time.sleep(0.04)  # notice > 20hz
         except IOError as e:
             print('IOError: %s' % e)
 
